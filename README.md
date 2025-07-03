@@ -90,8 +90,9 @@ To make the model hardware-efficient:
   - Zynq Processing System
   - AXI Interconnect
 
- My custom Accelerator
-![image](https://github.com/user-attachments/assets/5c66f98f-7cf1-43ad-8df0-c05982b24db5)
+#### My custom Accelerator
+![image](https://github.com/user-attachments/assets/10febdc0-abc4-4365-8175-061b24a08489)
+
 
 ---
 
