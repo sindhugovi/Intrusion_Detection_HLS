@@ -89,7 +89,9 @@ To make the model hardware-efficient:
 - Exported as a Vivado IP block for integration with:
   - Zynq Processing System
   - AXI Interconnect
- 
+
+ My custom Accelerator
+![image](https://github.com/user-attachments/assets/5c66f98f-7cf1-43ad-8df0-c05982b24db5)
 
 ---
 
