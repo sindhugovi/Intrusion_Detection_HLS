@@ -1,112 +1,97 @@
+🔐 Intrusion Detection System (IDS) on FPGA using Neural Networks
 An Intrusion Detection System (IDS) is a cybersecurity mechanism designed to monitor, detect, and respond to malicious activity or policy violations within a network or system. The goal is to identify signs of unauthorized access, cyberattacks, or abnormal behavior that could compromise data integrity, availability, or confidentiality.
 
-In this project, a fully connected neural network (FCNN) is trained on network traffic data, where each input sample consists of 46 numerical features extracted from a packet or flow (e.g., duration, bytes sent, flags, protocol type).
+🚀 Project Overview
+This project presents a hardware-efficient Intrusion Detection System (IDS) implemented on an FPGA using a fully connected neural network (FCNN) trained on preprocessed network traffic features.
 
-The neural network outputs one of 34 predefined labels, each representing a class such as:
+The trained model is quantized to int32 fixed-point.
 
-Normal traffic
+Implemented using Vivado HLS.
 
-Denial of Service (DoS)
+Optimized for real-time detection on resource-constrained edge devices.
 
-Probe (information gathering)
+🧠 Neural Network Details
+Each input sample consists of 46 numerical features (e.g., duration, bytes sent, flags, protocol type).
 
-Remote-to-Local (R2L)
+🔍 Classification Output
+The model outputs one of 35 predefined labels, such as:
 
-User-to-Root (U2R)
+✅ Normal Traffic
 
-And various specific attacks like smurf, teardrop, neptune, etc.
+💥 Denial of Service (DoS)
 
-The WorkFlow
- 1. Model Training
-    1.1. Feature Preparation
-The dataset consists of 46 numerical features extracted from network traffic data.
+🕵️‍♂️ Probe (Information Gathering)
 
-These features were normalized to a consistent scale (e.g., between -1 and 1) to improve model performance and stability.
+📩 Remote-to-Local (R2L)
 
-Labels representing different types of network connections (normal or attack types) were encoded into numerical values.
+🧑‍💻 User-to-Root (U2R)
 
-    1.2. Dataset Splitting
-The dataset was split into:
+🔻 Specific attacks like smurf, teardrop, neptune, etc.
 
-Training set: for learning model parameters.
+📊 Workflow
+🛠️ 1. Model Training
+⚙️ 1.1 Feature Preparation
+Extracted 46 numerical features from the dataset.
 
-Development (validation) set: for evaluating generalization performance during training.
-    1.3. Neural Network Architecture
-    The neural network used in this Intrusion Detection System (IDS) is a fully connected feedforward neural network with the following configuration:
+Applied normalization to scale values between -1 and 1.
 
-Input Layer
+Labels were encoded as numeric values.
 
-Size: 46 nodes
+✂️ 1.2 Dataset Splitting
+Training Set: For learning model weights.
 
-Represents the 46 numerical features extracted from network traffic data.
+Validation Set: To test generalization performance.
 
-Hidden Layer 1
+🧱 1.3 Neural Network Architecture
+Layer	Neurons	Activation
+Input Layer	46	—
+Hidden Layer 1	128	ReLU
+Hidden Layer 2	64	ReLU
+Hidden Layer 3	32	ReLU
+Output Layer	35	Argmax
 
-128 neurons
+🧮 2. Quantization
+After training in float32, all weights and biases were quantized to int32 using a scaling factor (e.g., 1e6).
 
-Activation Function: ReLU (Rectified Linear Unit)
+This enables fixed-point arithmetic on FPGA.
 
-Hidden Layer 2
+Output activations are scaled back using bit shifts (e.g., >> 20).
 
-64 neurons
+🧰 3. Vivado HLS Implementation
+After training and quantization, the neural network was implemented in C++ using Vivado HLS, and deployed to FPGA as a hardware IP core.
 
-Activation Function: ReLU
+🧾 3.1 Writing the C++ Inference Code
+Written using fixed-point int32_t types.
 
-Hidden Layer 3
+Layers (FC + ReLU) were coded as functions with efficient loop pipelining.
 
-32 neurons
+Used int64_t for accumulations to prevent overflow.
 
-Activation Function: ReLU
+ReLU and argmax functions implemented manually.
 
-Output Layer
+🗃️ 3.2 Exporting Model Parameters
+Weights and biases saved as header files:
 
-35 neurons (representing 35 distinct classes or types of network behavior, including normal and various attack categories)
+W1.h, b1.h, ..., W4.h, b4.h
 
-No activation function used in this layer; the predicted class is determined by taking the argmax of the output values.
+Test inputs exported as test_sample.h
 
-Each layer performs a fully connected linear transformation followed by a ReLU activation, except the output layer.
+⚙️ 3.3 C Simulation (csim)
+Used neural_net_test.cpp for simulation.
 
-2. Quantization
-Once the neural network model is trained using floating-point precision (e.g., float32), quantization is the next step to make the model hardware-friendly—especially for FPGAs where floating-point arithmetic is expensive in terms of power and resources.
+Verified correct prediction of known test input.
 
-3. Vivado HLS Implementation
-   After training and quantizing your neural network model in Python, the next major step is converting the trained model into synthesizable C/C++ code and implementing it on an FPGA using Vivado HLS (High-Level Synthesis). This step bridges the gap between AI and hardware.
+💡 3.4 C/RTL Synthesis (csynth)
+HLS converted C++ code to Verilog/VHDL.
 
- 3.1 Writing the C++ Inference Code
-The HLS implementation of Neural Netwotk includes:
+Timing and resource utilization analyzed.
 
-Input and Output Interface
-A 46-element input vector (features of a network packet) and an output label (predicted class).
+🔌 3.5 Interface Setup
+Implemented AXI4-Stream interface for:
 
-Layer Implementations
-Each layer (fully connected + ReLU) is written as a function. For fixed-point implementation, int32_t data types and simulate scaling was used(e.g., using bit shifts instead of floating-point operations).
+X[46] input
 
-Optimization Directives (Pragmas)
-HLS pragmas like #pragma HLS PIPELINE, #pragma HLS UNROLL, and #pragma HLS ARRAY_PARTITION were used.
+predicted_class output
 
-3.2 Exporting Model Weights and Test Samples
-Weights and biases are exported from Python as header files (W1.h, b1.h, etc.) in int32_t format.
-
-A test sample is also exported in fixed-point for verification (test_sample.h).
-
-These files are included in your HLS C++ code via #include.
-
-3.3 C Simulation (csim)
- A neural_net_test.cpp file was written to:
-
-Include test inputs
-
-Call the neural_net function
-
-Check the predicted output
-
-Run C Simulation in Vivado HLS to verify functional correctness.
-
-3.4 C/RTL Synthesis (csynth)
-C Synthesis was performed, which converts the C++ code into synthesizable RTL (Verilog/VHDL). 
-
-3.5 Interface Setup
-AXI4-Sream interfaces was created for inputs (X[46]) and output (predicted_class). 
-3.6 IP Export
-Once synthesis is successful, the design was exported as IP
-This IP can be used inside a Vivado block design for further integration (e.g., with a Zynq processor, DMA, or other logic).
+📦 3.6 IP Export
+Exported the synthesized module as a Vivado IP block.
