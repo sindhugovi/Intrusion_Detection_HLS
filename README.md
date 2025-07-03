@@ -1,97 +1,101 @@
-🔐 Intrusion Detection System (IDS) on FPGA using Neural Networks
-An Intrusion Detection System (IDS) is a cybersecurity mechanism designed to monitor, detect, and respond to malicious activity or policy violations within a network or system. The goal is to identify signs of unauthorized access, cyberattacks, or abnormal behavior that could compromise data integrity, availability, or confidentiality.
+# 🔐 Intrusion Detection System on FPGA using Neural Networks
 
-🚀 Project Overview
-This project presents a hardware-efficient Intrusion Detection System (IDS) implemented on an FPGA using a fully connected neural network (FCNN) trained on preprocessed network traffic features.
+This project presents a hardware-efficient **Intrusion Detection System (IDS)** implemented on an **FPGA** using a fully connected neural network (FCNN) trained on preprocessed network traffic features. The model is quantized to **fixed-point int32** and deployed using **Vivado HLS**, making it suitable for **real-time, resource-constrained environments** such as edge devices.
 
-The trained model is quantized to int32 fixed-point.
+---
 
-Implemented using Vivado HLS.
+## 🛡️ What is an Intrusion Detection System (IDS)?
 
-Optimized for real-time detection on resource-constrained edge devices.
+An **IDS** is a cybersecurity mechanism that monitors and analyzes network traffic to detect suspicious activities or policy violations. Its primary goal is to identify signs of:
 
-🧠 Neural Network Details
-Each input sample consists of 46 numerical features (e.g., duration, bytes sent, flags, protocol type).
+- 🚫 Unauthorized access  
+- 🐛 Cyberattacks  
+- 📉 Abnormal network behavior  
 
-🔍 Classification Output
-The model outputs one of 35 predefined labels, such as:
+This project uses machine learning to automatically detect and classify these threats.
 
-✅ Normal Traffic
+---
 
-💥 Denial of Service (DoS)
+## 🧠 Neural Network Overview
 
-🕵️‍♂️ Probe (Information Gathering)
+- **Input Features**: 46 numerical features extracted from network packets (e.g., bytes sent, protocol type).
+- **Output**: One of **35 classes**, including:
+  - ✅ Normal traffic
+  - 💥 DoS (Denial of Service)
+  - 🕵️ Probe (Scanning)
+  - 📩 R2L (Remote-to-Local)
+  - 🧑‍💻 U2R (User-to-Root)
+  - 🔻 Specific attacks like smurf, teardrop, neptune, etc.
 
-📩 Remote-to-Local (R2L)
+---
 
-🧑‍💻 User-to-Root (U2R)
+## 📊 Workflow
 
-🔻 Specific attacks like smurf, teardrop, neptune, etc.
+### 1️⃣ Model Training
 
-📊 Workflow
-🛠️ 1. Model Training
-⚙️ 1.1 Feature Preparation
-Extracted 46 numerical features from the dataset.
+#### 📌 Feature Preparation
+- Normalized 46 features to the range [-1, 1].
+- Encoded labels into integers representing different traffic types.
 
-Applied normalization to scale values between -1 and 1.
+#### ✂️ Dataset Splitting
+- Training set for learning parameters.
+- Validation set for measuring performance.
 
-Labels were encoded as numeric values.
+#### 🧱 Network Architecture
 
-✂️ 1.2 Dataset Splitting
-Training Set: For learning model weights.
+| Layer           | Neurons | Activation |
+|-----------------|---------|------------|
+| Input           | 46      | —          |
+| Hidden Layer 1  | 128     | ReLU       |
+| Hidden Layer 2  | 64      | ReLU       |
+| Hidden Layer 3  | 32      | ReLU       |
+| Output          | 35      | Argmax     |
 
-Validation Set: To test generalization performance.
+---
 
-🧱 1.3 Neural Network Architecture
-Layer	Neurons	Activation
-Input Layer	46	—
-Hidden Layer 1	128	ReLU
-Hidden Layer 2	64	ReLU
-Hidden Layer 3	32	ReLU
-Output Layer	35	Argmax
+### 2️⃣ Quantization
 
-🧮 2. Quantization
-After training in float32, all weights and biases were quantized to int32 using a scaling factor (e.g., 1e6).
+To make the model hardware-efficient:
 
-This enables fixed-point arithmetic on FPGA.
+- Trained model weights and biases in `float32` were **quantized to int32** using a scale factor (e.g., `1e6`).
+- Used **bit shifts** (e.g., `>> 20`) to simulate rescaling during inference.
+- Exported as C header files (`W1.h`, `b1.h`, etc.)
 
-Output activations are scaled back using bit shifts (e.g., >> 20).
+---
 
-🧰 3. Vivado HLS Implementation
-After training and quantization, the neural network was implemented in C++ using Vivado HLS, and deployed to FPGA as a hardware IP core.
+### 3️⃣ Vivado HLS Implementation
 
-🧾 3.1 Writing the C++ Inference Code
-Written using fixed-point int32_t types.
+#### 🧾 C++ Implementation
+- Implemented each layer as a function using `int32_t` and `int64_t` (for accumulation).
+- ReLU and argmax functions included.
+- Used HLS pragmas:
+  - `#pragma HLS PIPELINE`
+  - `#pragma HLS UNROLL`
+  - `#pragma HLS ARRAY_PARTITION`
 
-Layers (FC + ReLU) were coded as functions with efficient loop pipelining.
+#### 🧪 C Simulation (csim)
+- Verified model output using fixed-point test samples (`test_sample.h`).
 
-Used int64_t for accumulations to prevent overflow.
+#### 🔄 RTL Synthesis (csynth)
+- Converted C++ to synthesizable Verilog/VHDL.
+- Analyzed area, latency, and performance.
 
-ReLU and argmax functions implemented manually.
+#### 🔌 AXI Interface
+- Configured `AXI4-Stream` interfaces for:
+  - Input: `X[46]`
+  - Output: `predicted_class`
 
-🗃️ 3.2 Exporting Model Parameters
-Weights and biases saved as header files:
+#### 📦 IP Export
+- Exported as a Vivado IP block for integration with:
+  - Zynq Processing System
+  - AXI Interconnect
+ 
 
-W1.h, b1.h, ..., W4.h, b4.h
+---
 
-Test inputs exported as test_sample.h
+## ✅ Outcome
 
-⚙️ 3.3 C Simulation (csim)
-Used neural_net_test.cpp for simulation.
+A real-time, FPGA-deployable neural network for intrusion detection using fixed-point arithmetic, optimized for edge hardware using Vivado HLS.
 
-Verified correct prediction of known test input.
+---
 
-💡 3.4 C/RTL Synthesis (csynth)
-HLS converted C++ code to Verilog/VHDL.
-
-Timing and resource utilization analyzed.
-
-🔌 3.5 Interface Setup
-Implemented AXI4-Stream interface for:
-
-X[46] input
-
-predicted_class output
-
-📦 3.6 IP Export
-Exported the synthesized module as a Vivado IP block.
